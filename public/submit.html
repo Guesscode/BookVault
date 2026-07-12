@@ -13,36 +13,27 @@
     a:hover { color: #c0392b; }
 
     .nav { border-bottom: 1px solid #e0e0e0; padding: 12px 0; }
-    .nav-inner { max-width: 860px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-inner { max-width: 600px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; }
     .nav-logo { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
     .nav-links { display: flex; gap: 20px; font-size: 14px; }
     .nav-links a.active { text-decoration: underline; text-underline-offset: 4px; }
 
-    .container { max-width: 860px; margin: 40px auto; padding: 0 20px; }
+    .container { max-width: 600px; margin: 40px auto; padding: 0 20px; }
     h1 { font-size: 20px; font-weight: 600; margin-bottom: 24px; }
     .warning { background: #fff5f5; border: 1px solid #fecaca; color: #b91c1c; padding: 12px 16px; font-size: 13px; border-radius: 4px; margin-bottom: 24px; }
 
     .field { margin-bottom: 20px; }
     .field label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
     .field label .req { color: #c0392b; }
-    .field label .opt { color: #999; font-weight: 400; font-size: 12px; }
     .field input[type="text"], .field select { width: 100%; padding: 10px 12px; border: 1px solid #d0d0d0; border-radius: 4px; font-size: 14px; background: #fff; color: #333; outline: none; transition: border-color 0.15s; }
     .field input:focus, .field select:focus { border-color: #333; }
     .field .hint { font-size: 12px; color: #999; margin-top: 4px; }
 
-    .upload-row { display: flex; gap: 16px; }
-    .upload-half { flex: 1; min-width: 0; }
-    .upload-or { display: flex; align-items: center; justify-content: center; color: #999; font-size: 12px; flex-shrink: 0; padding-top: 22px; }
-
-    .md-editor { width: 100%; height: 202px; padding: 10px 12px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace; resize: vertical; outline: none; background: #fff; color: #333; line-height: 1.6; }
-    .md-editor:focus { border-color: #333; }
-    .md-count { font-size: 11px; color: #999; text-align: right; margin-top: 2px; }
-
-    .file-drop { border: 2px dashed #d0d0d0; border-radius: 6px; padding: 48px 20px 40px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+    .file-drop { border: 2px dashed #d0d0d0; border-radius: 6px; padding: 40px 20px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
     .file-drop:hover, .file-drop.dragover { border-color: #c0392b; background: #fff5f5; }
-    .file-drop .icon { font-size: 28px; margin-bottom: 6px; }
-    .file-drop .label { font-size: 13px; color: #666; }
-    .file-drop .sublabel { font-size: 11px; color: #999; margin-top: 4px; }
+    .file-drop .icon { font-size: 32px; margin-bottom: 8px; }
+    .file-drop .label { font-size: 14px; color: #666; }
+    .file-drop .sublabel { font-size: 12px; color: #999; margin-top: 4px; }
     .file-info { margin-top: 10px; padding: 10px 14px; background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
     .file-info .remove { color: #c0392b; cursor: pointer; font-size: 12px; }
 
@@ -54,12 +45,7 @@
     .result.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
     .result.error { background: #fff5f5; border: 1px solid #fecaca; color: #b91c1c; }
 
-    .footer { max-width: 860px; margin: 40px auto 20px; padding: 20px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #e0e0e0; }
-
-    @media (max-width: 640px) {
-      .upload-row { flex-direction: column; }
-      .upload-or { padding-top: 0; }
-    }
+    .footer { max-width: 600px; margin: 40px auto 20px; padding: 20px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #e0e0e0; }
   </style>
 </head>
 <body>
@@ -104,25 +90,16 @@
       </div>
 
       <div class="field">
-        <label>书籍内容 <span class="req">*</span> <span class="opt">（Markdown 或 PDF 至少选一种）</span></label>
-        <div class="upload-row">
-          <div class="upload-half">
-            <textarea class="md-editor" id="mdContent" placeholder="Markdown 格式&#10;&#10;# 第一章&#10;正文内容...&#10;&#10;支持标准 Markdown 语法"></textarea>
-            <div class="md-count"><span id="mdCount">0</span> / 500,000 字</div>
-          </div>
-          <div class="upload-or">或</div>
-          <div class="upload-half">
-            <div class="file-drop" id="fileDrop">
-              <div class="icon">📄</div>
-              <div class="label">点击或拖拽上传 PDF 文件</div>
-              <div class="sublabel">仅支持 .pdf 格式，最大 50MB</div>
-            </div>
-            <input type="file" id="fileInput" accept=".pdf,application/pdf" style="display:none">
-            <div class="file-info" id="fileInfo" style="display:none">
-              <span id="fileName"></span>
-              <span class="remove" id="fileRemove">移除</span>
-            </div>
-          </div>
+        <label>书籍文件 <span class="req">*</span></label>
+        <div class="file-drop" id="fileDrop">
+          <div class="icon">📄</div>
+          <div class="label">点击或拖拽上传文件</div>
+          <div class="sublabel">支持 Markdown (.md) 或 PDF (.pdf) — .md ≤ 500KB / .pdf ≤ 50MB</div>
+        </div>
+        <input type="file" id="fileInput" accept=".md,.pdf,text/markdown,application/pdf" style="display:none">
+        <div class="file-info" id="fileInfo" style="display:none">
+          <span id="fileName"></span>
+          <span class="remove" id="fileRemove">移除</span>
         </div>
       </div>
 
@@ -150,21 +127,18 @@
 
   <script>
     let selectedFile = null;
-    let textSample = '';
+    let fileType = '';   // 'md' | 'pdf'
+    let mdContent = '';  // Markdown text content (for .md files)
+    let textSample = ''; // Text for AI detection
     const fileDrop = document.getElementById('fileDrop');
     const fileInput = document.getElementById('fileInput');
     const fileInfo = document.getElementById('fileInfo');
     const fileName = document.getElementById('fileName');
-    const mdEditor = document.getElementById('mdContent');
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     document.getElementById('title').addEventListener('input', e => {
       document.getElementById('titleCount').textContent = e.target.value.length;
-    });
-
-    mdEditor.addEventListener('input', () => {
-      document.getElementById('mdCount').textContent = mdEditor.value.length.toLocaleString();
     });
 
     fileDrop.addEventListener('click', () => fileInput.click());
@@ -177,34 +151,61 @@
     });
     fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
     document.getElementById('fileRemove').addEventListener('click', () => {
-      selectedFile = null; textSample = ''; fileInput.value = ''; fileInfo.style.display = 'none'; fileDrop.style.display = 'block';
+      selectedFile = null; fileType = ''; mdContent = ''; textSample = '';
+      fileInput.value = ''; fileInfo.style.display = 'none'; fileDrop.style.display = 'block';
     });
 
     async function handleFile(file) {
-      if (!file || file.type !== 'application/pdf') return showResult('error', '仅支持 PDF 格式文件');
-      if (file.size > 50 * 1024 * 1024) return showResult('error', '文件大小不能超过 50MB');
+      if (!file) return;
+
+      // Detect type by extension and MIME
+      const name = file.name.toLowerCase();
+      const isMD = name.endsWith('.md') || name.endsWith('.markdown') || file.type === 'text/markdown';
+      const isPDF = name.endsWith('.pdf') || file.type === 'application/pdf';
+
+      if (!isMD && !isPDF) return showResult('error', '仅支持 Markdown (.md) 或 PDF (.pdf) 格式文件');
+
+      if (isMD && file.size > 500 * 1024) return showResult('error', 'Markdown 文件不能超过 500KB');
+      if (isPDF && file.size > 50 * 1024 * 1024) return showResult('error', 'PDF 文件不能超过 50MB');
+
       selectedFile = file;
-      fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB) — 提取文本中...';
+      fileType = isMD ? 'md' : 'pdf';
+      mdContent = '';
+      textSample = '';
       fileInfo.style.display = 'flex';
       fileDrop.style.display = 'none';
 
-      textSample = '';
-      try {
-        const buf = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-        const maxPages = Math.min(pdf.numPages, 30);
-        const parts = [];
-        for (let i = 1; i <= maxPages; i++) {
-          const page = await pdf.getPage(i);
-          const text = await page.getTextContent();
-          parts.push(text.items.map(it => it.str).join(' '));
-          if (parts.join(' ').length > 50000) break;
+      if (isMD) {
+        // Read Markdown file as text
+        try {
+          mdContent = await file.text();
+          textSample = mdContent.slice(0, 50000);
+          const chars = mdContent.length;
+          fileName.textContent = file.name + ' — ' + chars.toLocaleString() + ' 字 — 将用于AI检测';
+        } catch {
+          fileName.textContent = file.name + ' — 文件读取失败';
+          fileType = '';
         }
-        textSample = parts.join(' ').slice(0, 50000);
-        const chars = textSample.length;
-        fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB) — 已提取 ' + (chars > 1000 ? (chars/1000).toFixed(0)+'k' : chars) + ' 字用于AI检测';
-      } catch {
-        fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB) — 文本提取失败，将跳过AI检测';
+      } else {
+        // PDF: extract text for AI detection
+        fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB) — 提取文本中...';
+        try {
+          const buf = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+          const maxPages = Math.min(pdf.numPages, 30);
+          const parts = [];
+          for (let i = 1; i <= maxPages; i++) {
+            const page = await pdf.getPage(i);
+            const text = await page.getTextContent();
+            parts.push(text.items.map(it => it.str).join(' '));
+            if (parts.join(' ').length > 50000) break;
+          }
+          textSample = parts.join(' ').slice(0, 50000);
+          const chars = textSample.length;
+          fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB) — 已提取 ' + (chars > 1000 ? (chars/1000).toFixed(0)+'k' : chars) + ' 字用于AI检测';
+        } catch {
+          fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB) — 文本提取失败，将跳过AI检测';
+        }
       }
     }
 
@@ -220,8 +221,7 @@
       const btn = document.getElementById('submitBtn');
       document.getElementById('result').style.display = 'none';
 
-      const mdContent = mdEditor.value.trim();
-      if (!mdContent && !selectedFile) return showResult('error', '请填写 Markdown 内容或上传 PDF 文件（至少选一种）');
+      if (!selectedFile || !fileType) return showResult('error', '请先选择 Markdown (.md) 或 PDF (.pdf) 文件');
       if (typeof turnstile === 'undefined') return showResult('error', '验证组件尚未加载，请刷新页面');
       const token = turnstile.getResponse();
       if (!token) return showResult('error', '请先完成人机验证');
@@ -233,7 +233,7 @@
 
       try {
         let pdfBase64 = '';
-        if (selectedFile) {
+        if (fileType === 'pdf') {
           const buf = await selectedFile.arrayBuffer();
           const bytes = new Uint8Array(buf);
           let binary = '';
@@ -250,11 +250,12 @@
             title: document.getElementById('title').value.trim(),
             category: document.getElementById('category').value,
             contact: document.getElementById('contact').value.trim(),
-            content: mdContent,
-            fileName: selectedFile ? selectedFile.name : '',
-            fileSize: selectedFile ? selectedFile.size : 0,
-            pdfBase64,
-            textSample: mdContent || textSample,
+            fileType: fileType,
+            content: fileType === 'md' ? mdContent : '',
+            fileName: selectedFile.name,
+            fileSize: selectedFile.size,
+            pdfBase64: pdfBase64,
+            textSample: textSample,
             turnstileToken: token,
           }),
         });
@@ -262,10 +263,9 @@
         if (data.success) {
           showResult('success', '提交成功！书籍已上架。');
           document.getElementById('bookForm').reset();
-          selectedFile = null; textSample = ''; fileInput.value = '';
-          fileInfo.style.display = 'none'; fileDrop.style.display = 'block';
+          selectedFile = null; fileType = ''; mdContent = ''; textSample = '';
+          fileInput.value = ''; fileInfo.style.display = 'none'; fileDrop.style.display = 'block';
           document.getElementById('titleCount').textContent = '0';
-          document.getElementById('mdCount').textContent = '0';
           turnstile.reset(); reEnable();
         } else {
           showResult('error', (data.error || '提交失败') + ' 请重新完成验证后重试');
