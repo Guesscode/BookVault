@@ -27,38 +27,42 @@ export async function onRequestPost(context) {
   const count = parseInt((await env.RATE_LIMIT.get(key)) || "0");
   if (count >= 3) return error("该IP今日提交次数已达上限（3次/天），请明天再试", 429, corsHeaders);
 
-  // 3. Sensitive word filter (hard block)
+  // 3. Sensitive word filter (title only — PDF content is binary)
   const SENSITIVE = [
-    /\u6cd5\u8f6e\u529f/i, /\u7ffb\u5899/, /\u5206\u88c2\u56fd\u5bb6/, /\u90aa\u6559/,
-    /\u81ea\u6740\u6307\u5357/, /\u5236\u6bd2/, /\u5356\u6deb/, /\u67aa\u652f\u4ea4\u6613/,
+    /法轮功/i, /翻墙/, /分裂国家/, /邪教/,
+    /自杀指南/, /制毒/, /卖淫/, /枪支交易/,
   ];
   for (const re of SENSITIVE) {
-    if (re.test(body.content) || re.test(body.title))
+    if (re.test(body.title))
       return error("内容涉及敏感词汇，提交失败", 403, corsHeaders);
   }
 
   // 4. Field validation
   const title = (body.title || "").trim();
   const category = (body.category || "").trim();
-  const content = (body.content || "").trim();
+  const pdfBase64 = (body.pdfBase64 || "").trim();
   const contact = (body.contact || "").trim();
+  const fileSize = body.fileSize || 0;
   const CATEGORIES = ["数学", "计算机", "物理", "商业", "人文", "历史", "其他"];
 
   if (!title || title.length > 30) return error("书名不能为空且不超过30字", 400, corsHeaders);
-  if (!content || content.length > 500000) return error("内容不能为空且不超过50万字", 400, corsHeaders);
+  if (!pdfBase64 || pdfBase64.length > 70_000_000) return error("PDF内容不能为空且不超过50MB", 400, corsHeaders);
   if (!contact) return error("联系方式不能为空", 400, corsHeaders);
   if (!CATEGORIES.includes(category)) return error("无效的分类", 400, corsHeaders);
+  if (!fileSize || fileSize > 50 * 1024 * 1024) return error("文件大小无效", 400, corsHeaders);
 
-  // 5. Build file path and content with metadata header
+  // 5. Build file paths and metadata
   const safeName = title.replace(/[\\/:*?"<>|#\[\]]/g, "_");
-  const filePath = `books/${category}/${safeName}.md`;
-  const metadata = `<!-- 贡献者: ${contact} | 提交IP: ${ip} | 提交时间: ${new Date().toISOString()} -->\n\n`;
-  const fileContent = metadata + `# ${title}\n\n` + content;
+  const pdfPath = `books/${category}/${safeName}.pdf`;
+  const mdPath = `books/${category}/${safeName}.md`;
+  const now = new Date().toISOString();
+  const metadata = `<!-- 贡献者: ${contact} | 提交IP: ${ip} | 提交时间: ${now} | 文件大小: ${fileSize} -->\n\n# ${title}\n`;
 
-  // 6. Commit to GitHub via Contents API
+  // 6. Commit PDF and metadata to GitHub via Contents API
   try {
-    const ghRes = await fetch(
-      `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${encodeURIComponent(filePath).replace(/%2F/g, "/")}`,
+    // Step 1: Create the PDF file
+    const pdfRes = await fetch(
+      `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${encodeURIComponent(pdfPath).replace(/%2F/g, "/")}`,
       {
         method: "PUT",
         headers: {
@@ -68,20 +72,42 @@ export async function onRequestPost(context) {
           Accept: "application/vnd.github.v3+json",
         },
         body: JSON.stringify({
-          message: `add: [${category}] ${title}`,
-          content: btoa(unescape(encodeURIComponent(fileContent))),
+          message: `add: [${category}] ${title} (PDF)`,
+          content: pdfBase64,
         }),
       }
     );
-    const ghData = await ghRes.json();
-    if (!ghRes.ok) {
-      if ((ghData.message || "").includes("Invalid request") || ghRes.status === 422)
+    if (!pdfRes.ok) {
+      const d = await pdfRes.json();
+      if ((d.message || "").includes("Invalid request") || pdfRes.status === 422)
         return error("同名书籍已存在，请使用不同的书名", 409, corsHeaders);
-      return error(`存储失败: ${ghData.message || "GitHub API 错误"}`, 500, corsHeaders);
+      return error(`存储PDF失败: ${d.message || "GitHub API 错误"}`, 500, corsHeaders);
+    }
+
+    // Step 2: Create the metadata markdown file (for index generation)
+    const mdRes = await fetch(
+      `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${encodeURIComponent(mdPath).replace(/%2F/g, "/")}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${env.GITHUB_PAT}`,
+          "Content-Type": "application/json",
+          "User-Agent": "BookVault-Worker",
+          Accept: "application/vnd.github.v3+json",
+        },
+        body: JSON.stringify({
+          message: `add: [${category}] ${title} (metadata)`,
+          content: btoa(unescape(encodeURIComponent(metadata))),
+        }),
+      }
+    );
+    if (!mdRes.ok) {
+      const d = await mdRes.json();
+      return error(`存储元数据失败: ${d.message || "GitHub API 错误"}`, 500, corsHeaders);
     }
 
     await env.RATE_LIMIT.put(key, String(count + 1), { expirationTtl: 86400 });
-    return new Response(JSON.stringify({ success: true, message: "提交成功！书籍已上架。", path: filePath }), { status: 200, headers: corsHeaders });
+    return new Response(JSON.stringify({ success: true, message: "提交成功！书籍已上架。", path: pdfPath }), { status: 200, headers: corsHeaders });
   } catch (e) {
     return error(`系统繁忙，请稍后重试 (${e.message})`, 500, corsHeaders);
   }

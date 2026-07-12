@@ -24,12 +24,14 @@ for (const cat of CATEGORIES) {
     const titleMatch = content.match(/^# (.+)$/m);
     const metaMatch = content.match(/^<!-- (.+?) -->/);
 
-    let contributor = '', date = '';
+    let contributor = '', date = '', fileSize = 0;
     if (metaMatch) {
-      const cMatch = metaMatch[1].match(/贡献者: (.+?)(?:\s*\|)/);
-      const dMatch = metaMatch[1].match(/提交时间: (.+?)(?:\s*-->)/);
-      if (cMatch) contributor = cMatch[1].trim();
-      if (dMatch) date = dMatch[1].trim();
+      const fields = metaMatch[1].split('|').map(s => s.trim());
+      for (const f of fields) {
+        if (f.startsWith('贡献者: ')) contributor = f.slice(5);
+        else if (f.startsWith('提交时间: ')) date = f.slice(6);
+        else if (f.startsWith('文件大小: ')) fileSize = parseInt(f.slice(6));
+      }
     }
 
     // Extract first 200 chars of body as preview (skip metadata + title)
@@ -40,9 +42,10 @@ for (const cat of CATEGORIES) {
     books.push({
       title: titleMatch ? titleMatch[1] : path.basename(file, '.md'),
       category: cat,
-      path: `books/${cat}/${file}`,
+      path: `books/${cat}/${file.replace(/\.md$/, '.pdf')}`,
       contributor,
       date,
+      fileSize,
       preview,
     });
   }
