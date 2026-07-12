@@ -60,7 +60,12 @@
 
   <div class="container">
     <h1>贡献一本书</h1>
-    <div class="warning">您提交的内容将自动公开。请确保拥有版权，违法内容将被IP追踪。</div>
+    <div class="warning">
+      <strong>版权声明</strong><br>
+      您上传的内容将自动公开。上传者须对内容的合法性承担全部责任。<br>
+      上传即表示您确认：①拥有该内容的版权或已获合法授权；②上传行为不侵犯任何第三方权益。<br>
+      本平台保留配合版权方要求的义务（见<a href="dmca.html" style="color:#b91c1c;text-decoration:underline">版权政策</a>）。
+    </div>
 
     <form id="bookForm">
       <div class="field">
@@ -102,7 +107,14 @@
         <input type="text" id="contact" required placeholder="用于内容来源标记">
       </div>
 
-      <div class="cf-turnstile" data-sitekey="0x4AAAAAAD0Lg6RqfWIO6uLz" data-theme="light" style="margin-bottom:20px"></div>
+      <div class="cf-turnstile" data-sitekey="0x4AAAAAAD0Lg6RqfWIO6uLz" data-theme="light" style="margin-bottom:6px"></div>
+
+      <div class="field" style="margin-bottom:16px">
+        <label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="copyrightAgree" required style="margin-top:2px;accent-color:#c0392b">
+          <span>我确认拥有该内容的版权或已获合法授权，上传行为不侵犯第三方权益。如因侵权导致法律纠纷，由本人承担全部责任。</span>
+        </label>
+      </div>
 
       <button type="submit" class="btn-submit" id="submitBtn">提交书籍</button>
     </form>
@@ -110,7 +122,7 @@
     <div class="result" id="result"></div>
   </div>
 
-  <div class="footer">破卷书库 · 社区共建 · 内容由贡献者负责</div>
+  <div class="footer">破卷书库 · 社区共建 · <a href="dmca.html">版权政策 / DMCA</a></div>
 
   <script>
     let selectedFile = null;
