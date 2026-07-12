@@ -111,7 +111,7 @@
 
     function render() {
       const q = document.getElementById('searchInput').value.trim().toLowerCase();
-      let list = books;
+      let list = [...books].sort((a, b) => new Date(b.date) - new Date(a.date));
       if (currentCat !== 'all') list = list.filter(b => b.category === currentCat);
       if (q) list = list.filter(b => b.title.toLowerCase().includes(q));
 
