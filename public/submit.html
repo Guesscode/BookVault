@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>破卷书库 - 贡献书籍</title>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; color: #333; background: #f8f7f5; line-height: 1.6; }
@@ -63,7 +64,7 @@
     <div class="warning">
       <strong>版权声明</strong><br>
       您上传的内容将自动公开。上传者须对内容的合法性承担全部责任。<br>
-      上传即表示您确认：①拥有该内容的版权或已获合法授权；②上传行为不侵犯任何第三方权益。<br>
+      上传即表示您确认：①拥有该内容的版权或已获合法授权；②上传行为不侵犯任何第三方权益；③本书籍由AI生成，AI检测率不低于40%。<br>
       本平台保留配合版权方要求的义务（见<a href="dmca.html" style="color:#b91c1c;text-decoration:underline">版权政策</a>）。
     </div>
 
@@ -126,10 +127,13 @@
 
   <script>
     let selectedFile = null;
+    let textSample = '';
     const fileDrop = document.getElementById('fileDrop');
     const fileInput = document.getElementById('fileInput');
     const fileInfo = document.getElementById('fileInfo');
     const fileName = document.getElementById('fileName');
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     document.getElementById('title').addEventListener('input', e => {
       document.getElementById('titleCount').textContent = e.target.value.length;
@@ -145,16 +149,35 @@
     });
     fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
     document.getElementById('fileRemove').addEventListener('click', () => {
-      selectedFile = null; fileInput.value = ''; fileInfo.style.display = 'none'; fileDrop.style.display = 'block';
+      selectedFile = null; textSample = ''; fileInput.value = ''; fileInfo.style.display = 'none'; fileDrop.style.display = 'block';
     });
 
-    function handleFile(file) {
+    async function handleFile(file) {
       if (!file || file.type !== 'application/pdf') return showResult('error', '仅支持 PDF 格式文件');
       if (file.size > 50 * 1024 * 1024) return showResult('error', '文件大小不能超过 50MB');
       selectedFile = file;
-      fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB)';
+      fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB) — 提取文本中...';
       fileInfo.style.display = 'flex';
       fileDrop.style.display = 'none';
+
+      textSample = '';
+      try {
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        const maxPages = Math.min(pdf.numPages, 30);
+        const parts = [];
+        for (let i = 1; i <= maxPages; i++) {
+          const page = await pdf.getPage(i);
+          const text = await page.getTextContent();
+          parts.push(text.items.map(it => it.str).join(' '));
+          if (parts.join(' ').length > 50000) break;
+        }
+        textSample = parts.join(' ').slice(0, 50000);
+        const chars = textSample.length;
+        fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB) — 已提取 ' + (chars > 1000 ? (chars/1000).toFixed(0)+'k' : chars) + ' 字用于AI检测';
+      } catch {
+        fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB) — 文本提取失败，将跳过AI检测';
+      }
     }
 
     function showResult(type, msg) {
@@ -198,6 +221,7 @@
             fileName: selectedFile.name,
             fileSize: selectedFile.size,
             pdfBase64,
+            textSample,
             turnstileToken: token,
           }),
         });
@@ -205,7 +229,7 @@
         if (data.success) {
           showResult('success', '提交成功！书籍已上架。');
           document.getElementById('bookForm').reset();
-          selectedFile = null; fileInput.value = '';
+          selectedFile = null; textSample = ''; fileInput.value = '';
           fileInfo.style.display = 'none'; fileDrop.style.display = 'block';
           document.getElementById('titleCount').textContent = '0';
           turnstile.reset(); reEnable();

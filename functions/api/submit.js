@@ -55,14 +55,30 @@ export async function onRequestPost(context) {
   if (!CATEGORIES.includes(category)) return error("无效的分类", 400, corsHeaders);
   if (!fileSize || fileSize > 50 * 1024 * 1024) return error("文件大小无效", 400, corsHeaders);
 
-  // 5. Build file paths and metadata
+  // 5. AI content detection — reject if AI score < 40% (skip if no API key or no text)
+  const textSample = (body.textSample || "").trim();
+  if (textSample && textSample.length > 200 && env.SAPLING_API_KEY) {
+    try {
+      const aiRes = await fetch("https://api.sapling.ai/api/v1/aidetect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: env.SAPLING_API_KEY, text: textSample }),
+      });
+      const aiData = await aiRes.json();
+      if (aiRes.ok && typeof aiData.score === "number" && aiData.score < 0.4) {
+        return error(`AI检测率过低（${Math.round(aiData.score * 100)}%），本平台仅接受AI生成的书籍（AI率需≥40%）。如确认是AI生成，可尝试调整内容后重新提交。`, 403, corsHeaders);
+      }
+    } catch { /* API unavailable, skip detection */ }
+  }
+
+  // 6. Build file paths and metadata
   const safeName = title.replace(/[\\/:*?"<>|#\[\]]/g, "_");
   const pdfPath = `books/${category}/${safeName}.pdf`;
   const mdPath = `books/${category}/${safeName}.md`;
   const now = new Date().toISOString();
   const metadata = `<!-- 贡献者: ${contact} | 提交IP: ${ip} | 提交时间: ${now} | 文件大小: ${fileSize} -->\n\n# ${title}\n`;
 
-  // 6. Commit PDF and metadata to GitHub via Contents API
+  // 7. Commit PDF and metadata to GitHub via Contents API
   try {
     // Step 1: Create the PDF file
     const pdfRes = await fetch(
