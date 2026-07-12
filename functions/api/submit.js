@@ -20,7 +20,11 @@ export async function onRequestPost(context) {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ secret: env.TURNSTILE_SECRET, response: body.turnstileToken, remoteip: ip }),
   });
-  if (!(await turnstileRes.json()).success) return error("人机验证失败，请刷新页面重试", 403, corsHeaders);
+  const turnstileData = await turnstileRes.json();
+  if (!turnstileData.success) {
+    const detail = (turnstileData['error-codes'] || []).join(', ') || '未知错误';
+    return error(`人机验证失败: ${detail}，请刷新页面重试`, 403, corsHeaders);
+  }
 
   // 2. IP rate limiting (3 submissions / 24h via KV with 86400s TTL)
   const key = `rl:${ip}`;

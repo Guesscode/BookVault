@@ -198,8 +198,8 @@
           document.getElementById('titleCount').textContent = '0';
           turnstile.reset(); reEnable();
         } else {
-          showResult('error', data.error || '提交失败');
-          turnstile.reset();
+          showResult('error', (data.error || '提交失败') + ' 请重新完成验证后重试');
+          turnstile.reset(); reEnable();
         }
       } catch (err) {
         showResult('error', '网络错误，请检查网络后重试');
