@@ -3,136 +3,208 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BookVault - 分享你的自制书</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+  <title>破卷书库 - 贡献书籍</title>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <style>
-    body { background: #f8f9fa; }
-    .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 3rem 0; }
-    .warning-box { background: #dc3545; color: white; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.9rem; }
-    .form-card { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
-    .btn-submit { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 0.75rem 2rem; font-size: 1.1rem; }
-    .btn-submit:disabled { opacity: 0.6; }
-    textarea { font-family: 'Consolas', 'Courier New', monospace; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; color: #333; background: #fff; line-height: 1.6; }
+    a { color: #333; text-decoration: none; }
+    a:hover { color: #c0392b; }
+
+    .nav { border-bottom: 1px solid #e0e0e0; padding: 12px 0; }
+    .nav-inner { max-width: 800px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+    .nav-links { display: flex; gap: 20px; font-size: 14px; }
+    .nav-links a.active { text-decoration: underline; text-underline-offset: 4px; }
+
+    .container { max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    h1 { font-size: 20px; font-weight: 600; margin-bottom: 24px; }
+    .warning { background: #fff5f5; border: 1px solid #fecaca; color: #b91c1c; padding: 12px 16px; font-size: 13px; border-radius: 4px; margin-bottom: 24px; }
+
+    .field { margin-bottom: 20px; }
+    .field label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+    .field label .req { color: #c0392b; }
+    .field input[type="text"], .field select { width: 100%; padding: 10px 12px; border: 1px solid #d0d0d0; border-radius: 4px; font-size: 14px; background: #fff; color: #333; outline: none; transition: border-color 0.15s; }
+    .field input:focus, .field select:focus { border-color: #333; }
+    .field .hint { font-size: 12px; color: #999; margin-top: 4px; }
+
+    .file-drop { border: 2px dashed #d0d0d0; border-radius: 6px; padding: 40px 20px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+    .file-drop:hover, .file-drop.dragover { border-color: #c0392b; background: #fff5f5; }
+    .file-drop .icon { font-size: 32px; margin-bottom: 8px; }
+    .file-drop .label { font-size: 14px; color: #666; }
+    .file-drop .sublabel { font-size: 12px; color: #999; margin-top: 4px; }
+    .file-info { margin-top: 10px; padding: 10px 14px; background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+    .file-info .remove { color: #c0392b; cursor: pointer; font-size: 12px; }
+
+    .btn-submit { width: 100%; padding: 12px; background: #c0392b; color: #fff; border: none; border-radius: 4px; font-size: 15px; cursor: pointer; transition: background 0.15s; }
+    .btn-submit:hover { background: #a93226; }
+    .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+
+    .result { margin-top: 16px; padding: 12px 16px; border-radius: 4px; font-size: 14px; display: none; }
+    .result.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    .result.error { background: #fff5f5; border: 1px solid #fecaca; color: #b91c1c; }
+
+    .footer { max-width: 600px; margin: 40px auto 20px; padding: 20px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #e0e0e0; }
   </style>
 </head>
 <body>
-  <div class="hero text-center">
-    <div class="container">
-      <h1>📚 分享你的自制书</h1>
-      <p class="lead mb-0">1分钟上传，立即在公共书库中被检索到</p>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">破卷书库</a>
+      <div class="nav-links">
+        <a href="index.html">书库</a>
+        <a href="submit.html" class="active">贡献</a>
+      </div>
     </div>
-  </div>
+  </nav>
 
-  <div class="container py-4" style="max-width: 720px;">
-    <div class="form-card">
-      <div class="warning-box">
-        ⚠️ 您提交的内容将自动公开。请确保拥有版权，违法内容将被IP追踪。
+  <div class="container">
+    <h1>贡献一本书</h1>
+    <div class="warning">您提交的内容将自动公开。请确保拥有版权，违法内容将被IP追踪。</div>
+
+    <form id="bookForm">
+      <div class="field">
+        <label>书名 <span class="req">*</span></label>
+        <input type="text" id="title" maxlength="30" required placeholder="限制30字以内">
+        <div class="hint"><span id="titleCount">0</span>/30</div>
       </div>
 
-      <form id="bookForm">
-        <div class="mb-3">
-          <label class="form-label fw-bold">书名 <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="title" maxlength="30" required placeholder="限制30字以内">
-          <div class="form-text"><span id="titleCount">0</span>/30</div>
+      <div class="field">
+        <label>分类 <span class="req">*</span></label>
+        <select id="category" required>
+          <option value="">-- 请选择 --</option>
+          <option value="数学">数学</option>
+          <option value="计算机">计算机</option>
+          <option value="物理">物理</option>
+          <option value="商业">商业</option>
+          <option value="人文">人文</option>
+          <option value="历史">历史</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>PDF 文件 <span class="req">*</span></label>
+        <div class="file-drop" id="fileDrop">
+          <div class="icon">📄</div>
+          <div class="label">点击或拖拽上传 PDF 文件</div>
+          <div class="sublabel">仅支持 .pdf 格式，最大 50MB</div>
         </div>
-
-        <div class="mb-3">
-          <label class="form-label fw-bold">分类 <span class="text-danger">*</span></label>
-          <select class="form-select" id="category" required>
-            <option value="">-- 请选择分类 --</option>
-            <option value="数学">数学</option>
-            <option value="计算机">计算机</option>
-            <option value="物理">物理</option>
-            <option value="商业">商业</option>
-            <option value="人文">人文</option>
-            <option value="历史">历史</option>
-            <option value="其他">其他</option>
-          </select>
+        <input type="file" id="fileInput" accept=".pdf,application/pdf" style="display:none">
+        <div class="file-info" id="fileInfo" style="display:none">
+          <span id="fileName"></span>
+          <span class="remove" id="fileRemove">移除</span>
         </div>
+      </div>
 
-        <div class="mb-3">
-          <label class="form-label fw-bold">书籍内容 <span class="text-danger">*</span></label>
-          <textarea class="form-control" id="content" rows="16" required placeholder="支持 Markdown 语法&#10;&#10;# 第一章 引言&#10;正文内容...&#10;&#10;## 1.1 背景&#10;更多正文..."></textarea>
-          <div class="form-text">支持 Markdown 语法，建议先在本地编辑器中写好再粘贴。</div>
-        </div>
+      <div class="field">
+        <label>QQ号 / 邮箱 <span class="req">*</span></label>
+        <input type="text" id="contact" required placeholder="用于内容来源标记">
+      </div>
 
-        <div class="mb-3">
-          <label class="form-label fw-bold">QQ号 / 邮箱 <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="contact" required placeholder="用于内容来源标记">
-        </div>
+      <div class="cf-turnstile" data-sitekey="0x4AAAAAAD0Lg6RqfWI06uLz" data-theme="light" style="margin-bottom:20px"></div>
 
-        <div class="cf-turnstile mb-3" data-sitekey="0x4AAAAAAD0Lg6RqfWI06uLz" data-theme="light"></div>
+      <button type="submit" class="btn-submit" id="submitBtn">提交书籍</button>
+    </form>
 
-        <button type="submit" class="btn btn-submit w-100" id="submitBtn">提交书籍</button>
-      </form>
-
-      <div id="result" class="mt-3" style="display:none;"></div>
-    </div>
-
-    <div class="text-center mt-4">
-      <a href="index.html" class="text-decoration-none">← 返回书库主页</a>
-    </div>
+    <div class="result" id="result"></div>
   </div>
 
+  <div class="footer">破卷书库 · 社区共建 · 内容由贡献者负责</div>
+
   <script>
-    const titleInput = document.getElementById('title');
-    const titleCount = document.getElementById('titleCount');
-    titleInput.addEventListener('input', () => { titleCount.textContent = titleInput.value.length; });
+    let selectedFile = null;
+    const fileDrop = document.getElementById('fileDrop');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+
+    document.getElementById('title').addEventListener('input', e => {
+      document.getElementById('titleCount').textContent = e.target.value.length;
+    });
+
+    fileDrop.addEventListener('click', () => fileInput.click());
+    fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.classList.add('dragover'); });
+    fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('dragover'));
+    fileDrop.addEventListener('drop', e => {
+      e.preventDefault();
+      fileDrop.classList.remove('dragover');
+      handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+    document.getElementById('fileRemove').addEventListener('click', () => {
+      selectedFile = null; fileInput.value = ''; fileInfo.style.display = 'none'; fileDrop.style.display = 'block';
+    });
+
+    function handleFile(file) {
+      if (!file || file.type !== 'application/pdf') return showResult('error', '仅支持 PDF 格式文件');
+      if (file.size > 50 * 1024 * 1024) return showResult('error', '文件大小不能超过 50MB');
+      selectedFile = file;
+      fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB)';
+      fileInfo.style.display = 'flex';
+      fileDrop.style.display = 'none';
+    }
+
+    function showResult(type, msg) {
+      const r = document.getElementById('result');
+      r.className = 'result ' + type;
+      r.textContent = msg;
+      r.style.display = 'block';
+    }
 
     document.getElementById('bookForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('submitBtn');
-      const result = document.getElementById('result');
-      result.style.display = 'none';
+      document.getElementById('result').style.display = 'none';
 
-      // Get Turnstile token
-      if (typeof turnstile === 'undefined') {
-        result.innerHTML = '<div class="alert alert-warning">验证组件尚未加载，请刷新页面</div>';
-        result.style.display = 'block';
-        return;
-      }
-      const turnstileToken = turnstile.getResponse();
-      if (!turnstileToken) {
-        result.innerHTML = '<div class="alert alert-warning">请先完成人机验证</div>';
-        result.style.display = 'block';
-        return;
-      }
+      if (!selectedFile) return showResult('error', '请先选择 PDF 文件');
+      if (typeof turnstile === 'undefined') return showResult('error', '验证组件尚未加载，请刷新页面');
+      const token = turnstile.getResponse();
+      if (!token) return showResult('error', '请先完成人机验证');
 
-      // Debounce: disable button for 60 seconds
       btn.disabled = true;
-      btn.textContent = '提交中...';
+      btn.textContent = '上传中...';
       const reEnable = () => { btn.disabled = false; btn.textContent = '提交书籍'; };
-      setTimeout(reEnable, 60000);
+      setTimeout(reEnable, 120000);
 
       try {
+        const buf = await selectedFile.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        let binary = '';
+        const chunk = 8192;
+        for (let i = 0; i < bytes.length; i += chunk)
+          binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunk, bytes.length)));
+        const pdfBase64 = btoa(binary);
+
         const res = await fetch('/api/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: document.getElementById('title').value.trim(),
             category: document.getElementById('category').value,
-            content: document.getElementById('content').value,
             contact: document.getElementById('contact').value.trim(),
-            turnstileToken,
+            fileName: selectedFile.name,
+            fileSize: selectedFile.size,
+            pdfBase64,
+            turnstileToken: token,
           }),
         });
         const data = await res.json();
         if (data.success) {
-          result.innerHTML = '<div class="alert alert-success">✅ ' + data.message + '</div>';
+          showResult('success', '提交成功！书籍已上架。');
           document.getElementById('bookForm').reset();
-          turnstile.reset();
-          reEnable(); // Allow immediate next submission on success
+          selectedFile = null; fileInput.value = '';
+          fileInfo.style.display = 'none'; fileDrop.style.display = 'block';
+          document.getElementById('titleCount').textContent = '0';
+          turnstile.reset(); reEnable();
         } else {
-          result.innerHTML = '<div class="alert alert-danger">❌ ' + (data.error || '提交失败') + '</div>';
+          showResult('error', data.error || '提交失败');
           turnstile.reset();
         }
       } catch (err) {
-        result.innerHTML = '<div class="alert alert-danger">❌ 网络错误，请检查网络后重试</div>';
-        turnstile.reset();
-        reEnable();
+        showResult('error', '网络错误，请检查网络后重试');
+        turnstile.reset(); reEnable();
       }
-      result.style.display = 'block';
     });
   </script>
 </body>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>破卷书库 - 阅读</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; color: #333; background: #f5f5f5; }
+    a { color: #333; text-decoration: none; }
+    a:hover { color: #c0392b; }
+
+    .nav { border-bottom: 1px solid #e0e0e0; padding: 12px 0; background: #fff; position: sticky; top: 0; z-index: 10; }
+    .nav-inner { max-width: 900px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+    .nav-links { display: flex; gap: 16px; font-size: 14px; align-items: center; }
+    .nav-title { font-size: 14px; color: #666; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .toolbar { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 8px 0; position: sticky; top: 49px; z-index: 9; }
+    .toolbar-inner { max-width: 900px; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+    .toolbar button { padding: 4px 12px; border: 1px solid #d0d0d0; border-radius: 4px; background: #fff; font-size: 13px; cursor: pointer; color: #333; }
+    .toolbar button:hover { background: #f5f5f5; }
+    .toolbar span { font-size: 13px; color: #666; min-width: 80px; text-align: center; }
+
+    .viewer { max-width: 900px; margin: 20px auto; padding: 0 20px; }
+    .page-canvas { background: #fff; margin: 0 auto 16px; display: block; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+    .loading { text-align: center; padding: 60px 20px; color: #999; font-size: 14px; }
+    .error-box { text-align: center; padding: 60px 20px; color: #b91c1c; font-size: 14px; }
+
+    .btn-dl { padding: 6px 16px; background: #c0392b; color: #fff; border: none; border-radius: 4px; font-size: 13px; cursor: pointer; }
+    .btn-dl:hover { background: #a93226; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">破卷书库</a>
+      <div class="nav-links">
+        <span class="nav-title" id="bookTitle"></span>
+        <a href="#" class="btn-dl" id="dlBtn" style="display:none" download>下载</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="toolbar" id="toolbar" style="display:none">
+    <div class="toolbar-inner">
+      <button id="prevBtn">上一页</button>
+      <span id="pageInfo">1 / 1</span>
+      <button id="nextBtn">下一页</button>
+      <button id="zoomOut">-</button>
+      <span id="zoomLevel">100%</span>
+      <button id="zoomIn">+</button>
+    </div>
+  </div>
+
+  <div class="viewer" id="viewer">
+    <div class="loading" id="loading">加载中...</div>
+    <div class="error-box" id="errorBox" style="display:none"></div>
+  </div>
+
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const params = new URLSearchParams(location.search);
+    const pdfPath = params.get('path');
+    const REPO_RAW = 'https://raw.githubusercontent.com/Guesscode/BookVault/main/';
+
+    let pdfDoc = null, pageNum = 1, scale = 1.2;
+
+    document.getElementById('bookTitle').textContent = pdfPath ? decodeURIComponent(pdfPath.split('/').pop().replace('.pdf','')) : '';
+
+    async function loadPDF() {
+      if (!pdfPath) return showError('缺少文件路径参数');
+      const url = REPO_RAW + encodeURIComponent(pdfPath).replace(/%2F/g, '/');
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const buf = await res.arrayBuffer();
+        pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('toolbar').style.display = 'block';
+        document.getElementById('dlBtn').style.display = 'inline-block';
+        document.getElementById('dlBtn').href = url;
+        renderPage(pageNum);
+        updatePageInfo();
+      } catch (e) {
+        showError('加载失败：' + e.message);
+      }
+    }
+
+    async function renderPage(num) {
+      const page = await pdfDoc.getPage(num);
+      const viewport = page.getViewport({ scale });
+      let canvas = document.querySelector('.page-canvas');
+      if (!canvas) { canvas = document.createElement('canvas'); canvas.className = 'page-canvas'; document.getElementById('viewer').appendChild(canvas); }
+      canvas.width = viewport.width; canvas.height = viewport.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      document.getElementById('zoomLevel').textContent = Math.round(scale * 100) + '%';
+    }
+
+    function updatePageInfo() {
+      document.getElementById('pageInfo').textContent = pageNum + ' / ' + pdfDoc.numPages;
+      document.getElementById('prevBtn').disabled = pageNum <= 1;
+      document.getElementById('nextBtn').disabled = pageNum >= pdfDoc.numPages;
+    }
+
+    function showError(msg) {
+      document.getElementById('loading').style.display = 'none';
+      const box = document.getElementById('errorBox');
+      box.textContent = msg; box.style.display = 'block';
+    }
+
+    document.getElementById('prevBtn').onclick = () => { if (pageNum > 1) { pageNum--; renderPage(pageNum); updatePageInfo(); } };
+    document.getElementById('nextBtn').onclick = () => { if (pageNum < pdfDoc.numPages) { pageNum++; renderPage(pageNum); updatePageInfo(); } };
+    document.getElementById('zoomIn').onclick = () => { scale = Math.min(scale + 0.2, 3); renderPage(pageNum); };
+    document.getElementById('zoomOut').onclick = () => { scale = Math.max(scale - 0.2, 0.4); renderPage(pageNum); };
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' && pageNum > 1) document.getElementById('prevBtn').click();
+      if (e.key === 'ArrowRight' && pageNum < (pdfDoc?.numPages || 0)) document.getElementById('nextBtn').click();
+    });
+
+    loadPDF();
+  </script>
+</body>
+</html>
