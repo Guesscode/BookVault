@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>破卷书库 - 阅读</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/14.1.4/marked.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; color: #333; background: #f8f7f5; }
@@ -31,6 +32,24 @@
 
     .btn-dl { padding: 6px 16px; background: #c0392b; color: #fff; border: none; border-radius: 4px; font-size: 13px; cursor: pointer; }
     .btn-dl:hover { background: #a93226; }
+
+    .md-content { max-width: 720px; margin: 0 auto; padding: 24px 0; }
+    .md-content h1 { font-size: 1.6em; margin: 0.6em 0 0.4em; }
+    .md-content h2 { font-size: 1.3em; margin: 0.6em 0 0.3em; padding-bottom: 6px; border-bottom: 1px solid #e0e0e0; }
+    .md-content h3 { font-size: 1.1em; margin: 0.5em 0 0.2em; }
+    .md-content p { margin: 0.6em 0; line-height: 1.8; }
+    .md-content ul, .md-content ol { padding-left: 1.5em; margin: 0.5em 0; }
+    .md-content li { margin: 0.2em 0; line-height: 1.7; }
+    .md-content blockquote { border-left: 3px solid #c0392b; padding: 4px 16px; margin: 0.8em 0; color: #555; background: #fafafa; }
+    .md-content code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+    .md-content pre { background: #f5f5f5; padding: 14px 18px; border-radius: 4px; overflow-x: auto; font-size: 0.85em; line-height: 1.6; }
+    .md-content pre code { background: none; padding: 0; }
+    .md-content table { border-collapse: collapse; width: 100%; margin: 0.8em 0; }
+    .md-content th, .md-content td { border: 1px solid #d0d0d0; padding: 6px 12px; text-align: left; font-size: 0.9em; }
+    .md-content th { background: #f5f5f5; font-weight: 600; }
+    .md-content hr { border: none; border-top: 1px solid #e0e0e0; margin: 1.2em 0; }
+    .md-content a { color: #c0392b; }
+    .md-content img { max-width: 100%; }
   </style>
 </head>
 <body>
@@ -64,16 +83,40 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     const params = new URLSearchParams(location.search);
-    const pdfPath = params.get('path');
+    const bookPath = params.get('path');
     const REPO_RAW = 'https://raw.githubusercontent.com/Guesscode/BookVault/main/';
+    const isMarkdown = bookPath && bookPath.endsWith('.md');
 
+    const fileName = bookPath ? decodeURIComponent(bookPath.split('/').pop()) : '';
+    document.getElementById('bookTitle').textContent = fileName.replace(/\.(pdf|md)$/, '');
+
+    // --- Markdown rendering ---
+    async function loadMarkdown() {
+      if (!bookPath) return showError('缺少文件路径参数');
+      const url = REPO_RAW + encodeURIComponent(bookPath).replace(/%2F/g, '/');
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const text = await res.text();
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dlBtn').style.display = 'inline-block';
+        document.getElementById('dlBtn').href = url;
+        const viewer = document.getElementById('viewer');
+        const mdDiv = document.createElement('div');
+        mdDiv.className = 'md-content';
+        mdDiv.innerHTML = marked.parse(text);
+        viewer.appendChild(mdDiv);
+      } catch (e) {
+        showError('加载失败：' + e.message);
+      }
+    }
+
+    // --- PDF rendering ---
     let pdfDoc = null, pageNum = 1, scale = 1.2;
 
-    document.getElementById('bookTitle').textContent = pdfPath ? decodeURIComponent(pdfPath.split('/').pop().replace('.pdf','')) : '';
-
     async function loadPDF() {
-      if (!pdfPath) return showError('缺少文件路径参数');
-      const url = REPO_RAW + encodeURIComponent(pdfPath).replace(/%2F/g, '/');
+      if (!bookPath) return showError('缺少文件路径参数');
+      const url = REPO_RAW + encodeURIComponent(bookPath).replace(/%2F/g, '/');
       try {
         const res = await fetch(url);
         if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -122,7 +165,7 @@
       if (e.key === 'ArrowRight' && pageNum < (pdfDoc?.numPages || 0)) document.getElementById('nextBtn').click();
     });
 
-    loadPDF();
+    if (isMarkdown) loadMarkdown(); else loadPDF();
   </script>
 
   <div class="footer" style="max-width:900px;margin:40px auto 20px;padding:20px;text-align:center;font-size:12px;color:#999;border-top:1px solid #e0e0e0">破卷书库 · 社区共建 · <a href="dmca.html">版权政策 / DMCA</a></div>

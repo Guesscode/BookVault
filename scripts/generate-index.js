@@ -39,10 +39,12 @@ for (const cat of CATEGORIES) {
     const bodyText = content.slice(bodyStart).replace(/^# .+\n+/, '').replace(/[#*_`>\-]/g, '').trim();
     const preview = bodyText.slice(0, 200);
 
+    const pdfFile = file.replace(/\.md$/, '.pdf');
+    const hasPdf = fs.existsSync(path.join(catDir, pdfFile));
     books.push({
       title: titleMatch ? titleMatch[1] : path.basename(file, '.md'),
       category: cat,
-      path: `books/${cat}/${file.replace(/\.md$/, '.pdf')}`,
+      path: `books/${cat}/${hasPdf ? pdfFile : file}`,
       contributor,
       date,
       fileSize,
